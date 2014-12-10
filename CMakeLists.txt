@@ -22,11 +22,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_executable(polygon_client src/polygon_client.cpp)
 rosbuild_link_boost(polygon_client thread signals system)
 
-rosbuild_add_executable(object_marker src/interactive_object_marker_devel.cpp)
-#target_link_libraries(polygon_client ${PROJECT_NAME} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY} )
