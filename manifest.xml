@@ -14,7 +14,15 @@
   <depend package="interactive_markers"/>
   <depend package="visualization_msgs"/>
   <depend package="spatial_db"/>
+  <depend package="spatial_db_ros"/>
 
+  <depend package="python_qt_binding"/>
+  <depend package="rviz"/>
+
+  <export>
+    <rviz plugin="${prefix}/plugin_description.xml"/>
+  </export>
+ 
 </package>
 
 

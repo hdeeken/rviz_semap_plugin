@@ -154,7 +154,6 @@ public:
         point_ = nh_.subscribe("/clicked_point",10,&PolygonClient::pointCb, this);
         point_viz_pub_ = nh_.advertise<visualization_msgs::Marker>("polygon_marker", 10);
         polygon_pub_ = nh_.advertise<geometry_msgs::PolygonStamped>("polygon", 10);
-        //point_viz_timer_ = nh_.createWallTimer(ros::WallDuration(0.1), boost::bind(&PolygonClient::vizPubCb, this));
     }
 
 };
