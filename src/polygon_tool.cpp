@@ -10,12 +10,12 @@
 
 #include <polygon_tool.h>
 
-namespace rviz_spatial_db_plugin
+namespace rviz_polygon_tool
 {
 
   PolygonTool::PolygonTool()
   {
-    shortcut_key_ = 'l';
+    shortcut_key_ = 'p';
   }
 
   PolygonTool::~PolygonTool()
@@ -73,4 +73,4 @@ namespace rviz_spatial_db_plugin
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(rviz_spatial_db_plugin::PolygonTool, rviz::Tool )
+PLUGINLIB_EXPORT_CLASS(rviz_polygon_tool::PolygonTool, rviz::Tool )

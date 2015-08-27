@@ -13,7 +13,7 @@ class VectorProperty;
 class VisualizationManager;
 class ViewportMouseEvent;
 }
-namespace rviz_spatial_db_plugin
+namespace rviz_polygon_tool
 {
 
 class PolygonTool: public rviz::Tool

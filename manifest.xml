@@ -1,18 +1,19 @@
 <package>
-  <description brief="rviz_spatial_db_plugin">
-
-     rviz_spatial_db_plugin
-
+  <description brief="rviz_semap_plugins">
+    RViz utilities for the SEMAP project.
   </description>
   <author>hdeeken</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/rviz_spatial_db_plugin</url>
+  <url>http://ros.org/wiki/rviz_semap_plugins</url>
   <depend package="roscpp"/>
   <depend package="rospy"/>
   <depend package="geometry_msgs"/>
-  <depend package="interactive_markers"/>
+  <depend package="mesh_msgs"/>
   <depend package="visualization_msgs"/>
+  <depend package="interactive_markers"/>
+
+  <depend package="lvr_ros"/>
   <depend package="spatial_db"/>
   <depend package="spatial_db_ros"/>
 
@@ -22,7 +23,7 @@
   <export>
     <rviz plugin="${prefix}/plugin_description.xml"/>
   </export>
- 
+
 </package>
 
 

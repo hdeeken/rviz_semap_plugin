@@ -1,9 +1,7 @@
-<library path="lib/librviz_spatial_db_plugin">
-  <class name="rviz_spatial_db_plugin/PolygonTool"
-         type="rviz_spatial_db_plugin::PolygonTool"
-         base_class_type="rviz::Tool">
+<library path="lib/librviz_semap_plugin">
+  <class name="rviz_semap_plugin/LabelTool" type="rviz_semap_plugin::LabelTool" base_class_type="rviz::Tool">
     <description>
-      Tool for creating polygons on the ground plane in rviz.
+      Tool for segmenting triangle meshes and applying semantic labels.
     </description>
   </class>
 </library>
