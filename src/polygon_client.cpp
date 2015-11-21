@@ -9,7 +9,7 @@
 
 #include <visualization_msgs/Marker.h>
 
-namespace rviz_spatial_db_plugin{
+namespace rviz_semap_plugin{
 
 /**
  * @brief Client for 
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "polygon_client");
 
-    rviz_spatial_db_plugin::PolygonClient client;
+    rviz_semap_plugin::PolygonClient client;
     ros::spin();
     return 0;
 }

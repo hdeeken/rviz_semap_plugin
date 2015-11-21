@@ -32,14 +32,19 @@
 #include <map>
 #include <boost/lexical_cast.hpp>
 
-//#include <QMessageBox>
-//#include <QApplication>
-//#include <QIcon>
+#include <QMessageBox>
+#include <QApplication>
+#include <QIcon>
 
 #include <ros/console.h>
 #include <rviz/viewport_mouse_event.h>
 #include <rviz/visualization_manager.h>
 #include <rviz/geometry.h>
+
+#include <rviz/properties/bool_property.h>
+#include <rviz/properties/color_property.h>
+#include <rviz/properties/float_property.h>
+#include <rviz/properties/int_property.h>
 #include <rviz/properties/vector_property.h>
 #include <rviz/tool.h>
 #include <rviz/tool_manager.h>
@@ -57,21 +62,26 @@
 #include <OGRE/OgreRay.h>
 #include <OGRE/OgreSceneQuery.h>
 
+#include <std_msgs/Int32.h>
 #include <geometry_msgs/Point32.h>
 #include <mesh_msgs/TriangleMeshStamped.h>
 
-#include <spatial_db_msgs/ObjectDescription.h>
-#include <spatial_db_msgs/ObjectInstance.h>
-#include <spatial_db_ros/GetObjectInstances.h>
-#include <spatial_db_ros/GetObjectDescriptions.h>
-#include <spatial_db_ros/AddTriangleMesh3DModel.h>
+#include <semap_msgs/ObjectDescription.h>
+#include <semap_msgs/ObjectInstance.h>
+#include <semap_ros/GetObjectInstances.h>
+#include <semap_ros/GetObjectDescriptions.h>
+#include <semap_ros/AddObjectDescriptions.h>
+#include <semap_ros/AddObjectInstances.h>
+#include <semap_ros/AddTriangleMesh3DModel.h>
+#include <semap_ros/UpdateObjectDescriptions.h>
+#include <semap_env/ActivateObjects.h>
 
 #include <lvr_ros/lvr_ros_converter.h>
 
 #endif
 
 //QTWidgets
-//#include <label_viz.h>
+#include <label_viz.h>
 
 /**
  *
@@ -97,8 +107,14 @@ namespace lvr_ros_converter
 class LvrRosConverter;
 }
 
+namespace rviz
+{
+  class IntProperty;
+}
+
 namespace rviz_semap_plugin
 {
+class LabelViz;
 class LabelTool: public rviz::Tool
 {
 Q_OBJECT
@@ -121,12 +137,16 @@ public:
   bool areFacesSelected();
   void getSelectedFaces(size_t goalSection, std::string regionLabel, mesh_msgs::TriangleMesh &meshMsg);
 
+private Q_SLOTS:
+  void updateObjectID();
+
 private:
 
     void initNode();
     void initOGRE();
     bool loadObjectGeometries( std::vector<int> ids );
-    bool storeObjectGeometries(int id, mesh_msgs::TriangleMesh mesh);
+    bool addObjectGeometry(int id, string type, mesh_msgs::TriangleMesh mesh);
+    bool createObjectDescription(string object_type, string geometry_type, mesh_msgs::TriangleMesh mesh);
     void updateSelectionBox();
     void updateSelectionMesh();
 
@@ -162,8 +182,6 @@ private:
                                 size_t &indexCount,
                                 unsigned long* &indices);
 
-    void restoreTopology( mesh_msgs::TriangleMesh& mesh );
-
     void startPickingMode(Ogre::ManualObject *mesh);
     void stopPickingMode();
 
@@ -192,11 +210,19 @@ private:
     size_t m_startOfPickingSection;
     bool m_pickingFinished;
 
+    LabelViz* label_viz;
     ros::NodeHandle n;
     ros::ServiceClient get_object_descriptions_client;
     ros::ServiceClient get_object_geometries_client;
     ros::ServiceClient add_triangle_mesh_client;
+    ros::ServiceClient add_object_descriptions_client;
+    ros::ServiceClient add_object_instances_client;
+    ros::ServiceClient make_relative_client;
+    ros::ServiceClient activate_objects_client;
+
     ros::Publisher mesh_pub;
+    ros::Subscriber id_sub;
+    rviz::IntProperty* object_id_property;
 
     int object_id;
     bool object_loaded;
@@ -212,7 +238,7 @@ private:
     int segment_color_r = 0;
     int segment_color_g = 0;
     int segment_color_b = 255;
-    float segment_color_a = 0.5;
+    float segment_color_a = 0.75;
 
     mesh_msgs::TriangleMesh absolute_reference_mesh;
     mesh_msgs::TriangleMesh relative_reference_mesh;

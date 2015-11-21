@@ -4,4 +4,10 @@
       Tool for segmenting triangle meshes and applying semantic labels.
     </description>
   </class>
+
+  <class name="rviz_semap_plugin/SemapPanel" type="rviz_semap_plugin::SemapPanel" base_class_type="rviz::Panel">
+    <description>
+      ...
+    </description>
+  </class>
 </library>

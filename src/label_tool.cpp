@@ -38,16 +38,24 @@ LabelTool::LabelTool()
   object_id = 92;
   num_results = 10;
   object_loaded = false;
+
+  label_viz = NULL;
+  
   m_singleSelect = false;
   m_singleDeselect = false;
   m_multipleSelect = false;
+
+  object_id_property = new rviz::IntProperty( "Object ID", 0,
+                               "ID of the object to be segmented.",
+                                getPropertyContainer(), SLOT( updateObjectID() ), this );
 }
 
 LabelTool::~LabelTool()
 {
-  /*if (m_labelDialog != NULL)
+  /*
+  if (label_viz != NULL)
   {
-      delete m_labelDialog;
+      delete label_viz;
   }*/
 
   for (std::map<size_t, std::vector<size_t> >::iterator it = m_goalFaces.begin(); it != m_goalFaces.end(); it++)
@@ -71,6 +79,7 @@ void LabelTool::onInitialize()
   initNode();
   initOGRE();
 
+  label_viz = new LabelViz(this);
 }
 
 void LabelTool::initOGRE()
@@ -96,7 +105,7 @@ void LabelTool::initOGRE()
   reference_mesh_material->getTechnique(0)->getPass(0)->setPolygonMode(Ogre::PM_SOLID);
   reference_mesh_material->getTechnique(0)->getPass(0)->setCullingMode(Ogre::CULL_NONE);
 
-  segment_mesh = context_->getSceneManager()->createManualObject("SelectMesh");
+  segment_mesh = context_->getSceneManager()->createManualObject("SegmentedMesh");
   segment_mesh->setDynamic(false);
   scene_node->attachObject(segment_mesh);
 
@@ -104,7 +113,7 @@ void LabelTool::initOGRE()
   segment_mesh_material->getTechnique(0)->removeAllPasses();
   segment_mesh_material->getTechnique(0)->createPass();
   segment_mesh_material->getTechnique(0)->getPass(0)->setAmbient( Ogre::ColourValue(segment_color_r, segment_color_g, segment_color_b, segment_color_a) );
-  segment_mesh_material->getTechnique(0)->getPass(0)->setDiffuse(0,0,0,segment_color_a);
+  segment_mesh_material->getTechnique(0)->getPass(0)->setDiffuse(0,0,0, segment_color_a);
 
   //if (segment_color_a < 1.0)
   {
@@ -139,17 +148,30 @@ void LabelTool::initOGRE()
 
 void LabelTool::initNode()
 {
-  get_object_geometries_client = n.serviceClient<spatial_db_ros::GetObjectInstances>("get_object_instances");
-  get_object_descriptions_client = n.serviceClient<spatial_db_ros::GetObjectDescriptions>("get_object_descriptions");
-  add_triangle_mesh_client = n.serviceClient<spatial_db_ros::AddTriangleMesh3DModel>("add_triangle_mesh_3d_model");
+  get_object_geometries_client = n.serviceClient<semap_ros::GetObjectInstances>("get_object_instances");
+  get_object_descriptions_client = n.serviceClient<semap_ros::GetObjectDescriptions>("get_object_descriptions");
+  add_triangle_mesh_client = n.serviceClient<semap_ros::AddTriangleMesh3DModel>("add_triangle_mesh_3d_model");
+  add_object_descriptions_client = n.serviceClient<semap_ros::AddObjectDescriptions>("add_object_descriptions");
+  add_object_instances_client = n.serviceClient<semap_ros::AddObjectInstances>("add_object_instances");
+  make_relative_client = n.serviceClient<semap_ros::UpdateObjectDescriptions>("make_relative3d");
+  activate_objects_client = n.serviceClient<semap_env::ActivateObjects>("activate_objects");
+  
   converter = lvr_ros_converter::LvrRosConverter();
 
   mesh_pub = n.advertise<mesh_msgs::TriangleMeshStamped>( "segment", 1, true);
+  //id_sub = n.subscribe( "label_tool_id", 1, &LabelTool::idCallback, this);
+   
 }
+
+//void idCallback(const std_msgs::Int32::ConstPtr& id)
+//{
+  //ROS_INFO("New ID %d", id->data);
+//}
+
 /*
 bool LabelTool::loadObjectGeometries(std::vector<int> ids)
 {
-  spatial_db_ros::GetObjectInstances get_objects;
+  semap_ros::GetObjectInstances get_objects;
   get_objects.request.ids = ids;
 
   if (get_object_geometries_client.call(get_objects))
@@ -158,7 +180,7 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
 
     for ( int i = 0; i < get_objects.response.objects.size(); i++ )
     {
-      spatial_db_msgs::ObjectInstance obj = get_objects.response.objects[i];
+      semap_msgs::ObjectInstance obj = get_objects.response.objects[i];
       ROS_INFO(" loaded %s", obj.name.c_str() );
 
       for (int j = 0; j < obj.description.geometries.trianglemesh3d_models.size() ; j++ )
@@ -198,20 +220,18 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
   }
 }*/
 
-
 bool LabelTool::loadObjectGeometries(std::vector<int> ids)
 {
-  spatial_db_ros::GetObjectDescriptions get_objects;
+  semap_ros::GetObjectDescriptions get_objects;
   get_objects.request.ids = ids;
-    ROS_INFO("Try loarding %d", ids[0]);
 
   if (get_object_descriptions_client.call(get_objects))
   {
-    ROS_INFO("Got Objects");
+    //ROS_INFO("Got Objects");
 
     for ( int i = 0; i < get_objects.response.descriptions.size(); i++ )
     {
-      spatial_db_msgs::ObjectDescription obj = get_objects.response.descriptions[i];
+      semap_msgs::ObjectDescription obj = get_objects.response.descriptions[i];
       ROS_INFO(" loaded %s", obj.type.c_str() );
 
       for (int j = 0; j < obj.geometries.trianglemesh3d_models.size() ; j++ )
@@ -223,7 +243,7 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
           relative_reference_mesh = obj.geometries.trianglemesh3d_models[j].geometry;
           ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
           converter.removeDuplicates(relative_reference_mesh);
-          ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
+          //ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
           setReferenceMesh(relative_reference_mesh);
         }
       }
@@ -231,37 +251,99 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
 
     size_t numSections = reference_mesh->getNumSections();
 
-    ROS_INFO("ref mesh has %d sections", numSections);
+    //ROS_INFO("ref mesh has %d sections", numSections);
 
     return true;
   }
   else
   {
-    ROS_ERROR("Failed to get objects");
+    ROS_ERROR("LabelTool failed to load objects. Please make sure the SEMAP DB Services are running.");
     return false;
   }
 }
 
-bool LabelTool::storeObjectGeometries(int id, mesh_msgs::TriangleMesh mesh)
+bool LabelTool::addObjectGeometry(int id, string type, mesh_msgs::TriangleMesh mesh)
 {
-  spatial_db_msgs::TriangleMesh3DModel model;
-  model.type = "New Segment";
+  semap_msgs::TriangleMesh3DModel model;
+  model.type = type;
   model.geometry = mesh;
 
-  spatial_db_ros::AddTriangleMesh3DModel add_model;
+  semap_ros::AddTriangleMesh3DModel add_model;
   add_model.request.id = id;
   add_model.request.model = model;
 
-  if ( add_triangle_mesh_client.call(add_model))
+  if ( add_triangle_mesh_client.call(add_model) )
   {
-    ROS_ERROR("added geometry");
     return true;
   }
   else
   {
-    ROS_ERROR("failed to add geometry");
     return false;
   }
+}
+
+bool LabelTool::createObjectDescription(string object_type, string geometry_type, mesh_msgs::TriangleMesh mesh)
+{
+  semap_msgs::ObjectDescription desc = semap_msgs::ObjectDescription();
+  desc.type = object_type;
+  
+  semap_ros::AddObjectDescriptions add_description;
+  add_description.request.descriptions.push_back( desc );
+
+  if ( add_object_descriptions_client.call( add_description ) )
+  {
+    semap_msgs::TriangleMesh3DModel model;
+    model.type = geometry_type;
+    model.geometry = mesh;
+
+    semap_ros::AddTriangleMesh3DModel add_model;
+    add_model.request.id = add_description.response.ids[0];
+    add_model.request.model = model;
+
+    if ( add_triangle_mesh_client.call(add_model) )
+    {
+      semap_msgs::ObjectInstance inst = semap_msgs::ObjectInstance();
+      inst.description.id = add_description.response.ids[0];
+      inst.pose.header.frame_id = "world";
+
+      semap_ros::AddObjectInstances add_instance;
+      add_instance.request.objects.push_back( inst );
+
+      if ( add_object_instances_client.call( add_instance ) )
+      {
+         semap_ros::UpdateObjectDescriptions make_relative;
+         make_relative.request.ids.push_back( add_model.response.id );
+
+         if ( make_relative_client.call( make_relative ) )
+         {
+            semap_env::ActivateObjects activate_objects;
+            activate_objects.request.ids = add_instance.response.ids;
+            if ( activate_objects_client.call( activate_objects ) )
+            {
+            }
+            else return false;
+         }
+      } else return false;
+    }
+    else
+    {
+      return false;
+    }
+
+  }
+  else
+  {
+    return false;
+  }
+
+}
+
+void LabelTool::updateObjectID()
+{
+  object_id = object_id_property->getInt();
+  object_loaded = false;
+  clearSelection();
+  activate();
 }
 
 void LabelTool::activate()
@@ -274,12 +356,12 @@ void LabelTool::activate()
     if( loadObjectGeometries( ids ) )
     {
       ROS_INFO("LabelTool sucessfully loaded geoms");
+      object_loaded = true;
     }
     else
     {
       ROS_INFO("LabelTool could not loaded geoms");
     }
-    object_loaded = true;
   }
 }
 
@@ -289,6 +371,7 @@ void LabelTool::deactivate()
 
 void LabelTool::setReferenceMesh( mesh_msgs::TriangleMesh mesh )
 {
+  clearSelection();
   reference_mesh->begin("ReferenceMeshMaterial", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
   for ( size_t i = 0; i < mesh.vertices.size(); i++ )
@@ -307,7 +390,7 @@ void LabelTool::setReferenceMesh( mesh_msgs::TriangleMesh mesh )
 void LabelTool::getSegmentMesh(mesh_msgs::TriangleMesh &mesh) //size_t goalSection, std::string regionLabel
 {
   size_t numSections = segment_mesh->getNumSections();
-  ROS_INFO("Mesh has %d sections, we only take the first", numSections);
+  //ROS_INFO("Mesh has %d sections, we only take the first", numSections);
 
   size_t vertexCount;
   Ogre::Vector3* vertices;
@@ -317,7 +400,7 @@ void LabelTool::getSegmentMesh(mesh_msgs::TriangleMesh &mesh) //size_t goalSecti
   if(numSections > 0)
   {
     getRawManualObjectData(segment_mesh, 0, vertexCount, vertices, indexCount, indices);
-    ROS_INFO("#vert %d #ind %d", vertexCount, indexCount );
+    //ROS_INFO("#vert %d #ind %d", vertexCount, indexCount );
 
     geometry_msgs::Point vertex;
     mesh_msgs::TriangleIndices index;
@@ -338,8 +421,6 @@ void LabelTool::getSegmentMesh(mesh_msgs::TriangleMesh &mesh) //size_t goalSecti
     }
   }
 }
-
-
 
 /*
 void LabelTool::getSegmentMesh(mesh_msgs::TriangleMesh &mesh) //size_t goalSection, std::string regionLabel
@@ -524,33 +605,52 @@ void LabelTool::updateSelectionMesh()
 // Handling key events to label marked faces or to get db structure
 int LabelTool::processKeyEvent(QKeyEvent *event, rviz::RenderPanel* panel)
 {
-
+  if (event->key() == Qt::Key_P)
+  {
+    mesh_msgs::TriangleMeshStamped mesh;
+    getSegmentMesh(mesh.mesh);
+    mesh.header.frame_id = "world";
+    mesh.header.stamp = ros::Time::now();
+    mesh_pub.publish( mesh );
+  }
+  
   // if 'n' is pressed start QTWidget labviz to get Label information
   if (event->key() == Qt::Key_N)
   {
-    ROS_INFO("GET MESH");
-    mesh_msgs::TriangleMeshStamped mesh;
-    getSegmentMesh(mesh.mesh);
-    //int old_ = mesh.mesh.vertices.size();
-    //ROS_INFO("mesh has %d verts %d faces", mesh.mesh.vertices.size(), mesh.mesh.triangles.size() );
-    //converter.removeDuplicates(mesh.mesh);
-    //ROS_INFO("mesh has %d verts %d faces", mesh.mesh.vertices.size(), mesh.mesh.triangles.size() );
-    //int new_ = mesh.mesh.vertices.size();
-    //float ratio = 1.0 - new_/old_;
-    //ROS_INFO("thats a loss of %f", ratio );
-    mesh.header.frame_id = "world";
-    mesh.header.stamp = ros::Time::now();
-    ROS_INFO("PUBLISH");
-    mesh_pub.publish( mesh );
-    ROS_INFO("STORE");
-    storeObjectGeometries(object_id, mesh.mesh);
-    //  m_labelDialog->exec();
+    label_viz->exec();
+    if ( label_viz->getStatus() )
+    {
+
+      if(label_viz->getModus() == "Add")
+      {
+        mesh_msgs::TriangleMesh mesh;
+        getSegmentMesh(mesh);
+        addObjectGeometry(object_id, label_viz->getSegmentName(), mesh);
+      }
+      else if(label_viz->getModus() == "New Object")
+      {
+        mesh_msgs::TriangleMesh mesh;
+        getSegmentMesh(mesh);
+        createObjectDescription(label_viz->getObjectName(), label_viz->getSegmentName(), mesh);
+      }
+    }
+    else
+    {
+      ROS_INFO("do nothing" );
+    }
+
   }
 
-  // if 's' is pressed clear the current selection of faces
+  // if 'r' is pressed clear the current selection of faces
   if (event->key() == Qt::Key_R)
   {
-      clearSelection();
+    clearSelection();
+  }
+
+  if (event->key() == Qt::Key_T)
+  {
+    reference_mesh->setVisible( !reference_mesh->isVisible() );
+    segment_mesh->setVisible( !segment_mesh->isVisible() );
   }
 
   return Render;
@@ -1191,7 +1291,7 @@ void LabelTool::stopPickingMode()
     while (iterator.hasMoreElements())
     {
         Ogre::MovableObject* face = static_cast<Ogre::MovableObject*>(iterator.getNext());
-        if (face->getName().find("SelectMesh") == std::string::npos && face->getName().find("SelectionBox") == std::string::npos)
+        if (face->getName().find("SegmentedMesh") == std::string::npos && face->getName().find("SelectionBox") == std::string::npos)
         {
             scene_node->detachObject(face);
             scene_node->getCreator()->destroyMovableObject(face);

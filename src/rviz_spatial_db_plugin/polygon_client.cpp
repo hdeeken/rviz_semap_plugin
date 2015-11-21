@@ -4,7 +4,7 @@
 Interactive Description Marker
 """
 
-import roslib; roslib.load_manifest("spatial_environment")
+import roslib; roslib.load_manifest("spatial_env")
 import rospy
 import copy
 
@@ -16,12 +16,12 @@ from tf.broadcaster import TransformBroadcaster
 from random import random
 from math import sin
 
-from rviz_spatial_db_plugin.object_description_marker import *
+from rviz_semap_plugin.object_description_marker import *
 from geometry_msgs.msg import PoseStamped as ROSPoseStamped
 
 from python_qt_binding.QtGui import QWidget
 
-from spatial_db_ros.srv import *
+from h.srv import *
 
 #### UNABHAENGIG ###
 def createTitleControl(controls, object_name):

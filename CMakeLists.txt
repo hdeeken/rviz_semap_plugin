@@ -12,11 +12,17 @@ link_directories( ${QT_LIBRARY_DIRS} )
 add_definitions(-DQT_NO_KEYWORDS)
 
 qt4_wrap_cpp(MOC_FILES
+  include/label_viz.h
   include/label_tool.h
+  include/semap_panel.h
+  include/semap_widgets.h
 )
 
 set(SOURCE_FILES
+  src/label_viz.cpp
   src/label_tool.cpp
+  src/semap_panel.cpp
+  src/semap_widgets.cpp
   ${MOC_FILES}
 )
 
@@ -33,5 +39,5 @@ target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
 #rosbuild_link_boost(rviz_polygon_tool system)
 #target_link_libraries(rviz_polygon_tool ${OGRE_LIBRARIES} ${QT_LIBRARIES})
 
-#rosbuild_add_library(rviz_label_tool src/label_tool.cpp)
+rosbuild_add_executable(polygon_client src/polygon_client.cpp src/polygon_client.cpp)
 #rosbuild_link_boost(rviz_label_tool system)

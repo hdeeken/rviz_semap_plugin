@@ -18,78 +18,119 @@
  * BUSINESS  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE   OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * importer_widget.h
+ * label_viz.h
  *
- * Author: Henning Deeken
+ *  Author: Tristan Igelbrink <tigelbri@uos.de>
+ *          Johannes Heitmann <joheitma@uos.de>
+ *          Marcel Mrozinski  <mmronzs@uos.de
  *
  */
 
-#ifndef MESH_IMPORTER_WIDGET_H
-#define MESH_IMPORTER_WIDGET_H
+#ifndef LABEL_VIZ_H
+#define LABEL_VIZ_H
 
-#include <string>
-#include <vector>
-#include <iostream>
-
-#include <QWidget>
 #include <QDialog>
 #include <QLabel>
 #include <QGridLayout>
-#include <QVBoxLayout>
 #include <QPushButton>
 #include <QComboBox>
-#include <QCheckBox>
-#include <QLineEdit>
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QFileDialog>
-#include <QTreeView>
+#include <QString>
 
-//ROS
-#include <ros/ros.h>
-#include <ros/console.h>
-#include <boost/filesystem.hpp>
+#include <iostream>
+#include <string>
+#include <vector>
 
-#include <../src/mesh_utility.cpp>
+#include <label_tool.h>
 
 /**
  *
- *@class MeshImporterWidget
+ *@class LabelViz
  *
- *@brief QTreeWidget which handles the import of scans
+ *@brief QTreeWidget which handles labeling of given regions rooms etc
+ *
+ * this class implements a qtwidget which dumps the marked faces with
+ * a new label into the database
  *
  */
 
 namespace rviz_semap_plugin
-{
 
-class MeshImporterWidget : public QDialog
+{
+class LabelTool;
+class LabelViz: public QDialog
 {
 
 Q_OBJECT
 public:
 
-MeshImporterWidget( QWidget* parent = 0);
+/**
+ *
+ *@brief constructor
+ *
+ *@param label_tool parent labelTool which is connected to this viz
+ *
+ */
+LabelViz(LabelTool* label_tool = 0);
 
-virtual ~MeshImporterWidget();
+/**
+ *
+ *@brief destructor
+ *
+ */
+virtual ~LabelViz();
 
-bool importMesh(std::string path);
+/**
+ *
+ *@brief overwritten exec-method
+ *
+ */
+virtual void exec();
 
+bool getStatus();
+std::string getModus();
+std::string getObjectName();
+std::string getSegmentName();
 
-//bool (lvr_ros::Mesh& mesh, string floor_label, string room_label);
+private Q_SLOTS:
+
+/**
+ *
+ *@brief function which is called when the 'label' button is pressed
+ *
+ * QSlot function for dumping the labels into the database
+ *
+ */
+void labelButtonClicked();
+
+/**
+ *
+ *@brief function which is called when the 'cancel' button is pressed
+ *
+ * Q Slot function for cancelling the procedure
+ *
+ */
+void cancelButtonClicked();
 
 private:
-  // checkbox for converting to ros format
-  QCheckBox* convert_to_ros;
-  QLabel* path_label;
-  std::string path;
 
-  private Q_SLOTS:
+/**
+ *
+ *@brief fills the QtComboBoxes with the room, in which the selected
+ *        faces are
+ *
+ */
+void setComboBoxes();
 
-void importButtonClicked();
+LabelTool* label_tool;
+QComboBox* modi_edit;
+QComboBox* segment_name_edit;
+QComboBox* object_name_edit;
 
-void chooseButtonClicked();
+bool status;
+std::string modus;
+std::string object_name;
+std::string segment_name;
+
 };
-
 }
 #endif

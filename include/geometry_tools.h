@@ -4,7 +4,7 @@
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/Point.h>
 
-namespace rviz_spatial_db_plugin{
+namespace rviz_semap_plugin{
 
 /**
  * @brief Evaluate whether two points are approximately adjacent, within a specified proximity distance.
