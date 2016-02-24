@@ -76,7 +76,7 @@
 #include <semap_ros/UpdateObjectDescriptions.h>
 #include <semap_env/ActivateObjects.h>
 
-#include <lvr_ros/lvr_ros_converter.h>
+#include <lvr_ros/lvr_ros_conversions.h>
 
 #endif
 
@@ -227,8 +227,6 @@ private:
     int object_id;
     bool object_loaded;
     int num_results;
-
-    lvr_ros_converter::LvrRosConverter converter;
 
     int reference_color_r = 0;
     int reference_color_g = 155;

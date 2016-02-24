@@ -156,7 +156,7 @@ void LabelTool::initNode()
   make_relative_client = n.serviceClient<semap_ros::UpdateObjectDescriptions>("make_relative3d");
   activate_objects_client = n.serviceClient<semap_env::ActivateObjects>("activate_objects");
   
-  converter = lvr_ros_converter::LvrRosConverter();
+  //converter = lvr_ros_converter::LvrRosConverter();
 
   mesh_pub = n.advertise<mesh_msgs::TriangleMeshStamped>( "segment", 1, true);
   //id_sub = n.subscribe( "label_tool_id", 1, &LabelTool::idCallback, this);
@@ -199,7 +199,7 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
         {
           relative_reference_mesh = obj.description.geometries.trianglemesh3d_models[j].geometry;
           ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
-          converter.removeDuplicates(relative_reference_mesh);
+          lvr_ros::removeDuplicates(relative_reference_mesh);
           ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
           setReferenceMesh(relative_reference_mesh);
         }
@@ -242,7 +242,7 @@ bool LabelTool::loadObjectGeometries(std::vector<int> ids)
         {
           relative_reference_mesh = obj.geometries.trianglemesh3d_models[j].geometry;
           ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
-          converter.removeDuplicates(relative_reference_mesh);
+          lvr_ros::removeDuplicates(relative_reference_mesh);
           //ROS_INFO("relative mesh has %d verts %d faces", relative_reference_mesh.vertices.size(), relative_reference_mesh.triangles.size() );
           setReferenceMesh(relative_reference_mesh);
         }

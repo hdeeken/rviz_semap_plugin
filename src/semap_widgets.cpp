@@ -37,7 +37,7 @@ void ObjectChoice::setComboBoxes( std::map<std::string, int> choices )
   for( std::map<std::string, int>::iterator it = choices.begin(); it != choices.end(); it++)
   {
     //ROS_INFO("%s", it->first.c_str());
-    choice->addItem( QString(it->first) );
+    choice->addItem( QString(it->first.c_str() ) );
   }
   
 }
@@ -70,6 +70,5 @@ std::string ObjectChoice::getObjectType()
 {
   return object_name;
 }*/
-
 
 }
